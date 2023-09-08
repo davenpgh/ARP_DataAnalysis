@@ -1,0 +1,268 @@
+---
+title: "Updated_Code"
+author: "Grace Davenport"
+date: "2023-09-08"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Box plot 1 factor
+mybox <- function(dataset,x,y){
+  p <- ggplot(dataset,aes(.data[[x]],.data[[y]]))
+  # Setting base theme
+  p <- p + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+               panel.background = element_blank(), axis.line = element_line(colour = "black"))
+  # Adding scatter plot with jittered data
+  p <- p + geom_jitter(aes(colour=.data[[x]],fill=.data[[x]],shape=.data[["Cruise"]]),width=0.25,size=2,stroke=0.2) 
+  #p <- p + geom_jitter(aes(colour=.data[["Habitat"]],fill=.data[["Habitat"]]),width=0.25,size=2,stroke=0.2) 
+  # Drawing whisker box
+  p <- p + geom_boxplot(outlier.shape = NA,alpha=0,lwd=0.35)
+  # Change shape
+  p <- p + scale_shape_manual(values=myshape)
+  # Change border and fill colors
+  p <- p + scale_color_manual(values=c("gray35","gray35","gray35","gray35","gray35","gray35","gray35"))
+  #p <- p + scale_color_manual(values=mycolor)
+  p <- p + scale_fill_manual(values=mycolor)
+  # Turn off legend
+  p <- p + theme(legend.position = "none")
+  # Edit text size
+  p <- p + theme(axis.text = element_text(size=12),axis.title = element_text(size=14,face="bold")) 
+  # Plot margin
+  p <- p + theme(plot.margin = margin(0.5,2,0.5,0.5,"cm"))
+  return(p)
+}
+
+anova_letter <- function(dataset,x,y,rev=T){
+  ## Plot anova
+  # analysis of variance
+  anova <- aov(dataset[[y]]~dataset[[x]])
+  # Tukey's test
+  tukey <- TukeyHSD(anova)
+  # compact letter display
+  cld <- multcompLetters4(anova, tukey,reverse=rev)
+  # extracting the letter
+  cld <- cld$`dataset[[x]]`$Letters
+  # use factor groups as x coordinate
+  x_cor <- names(cld)
+  # Calculate y coordinate
+  y_cor <- (max(dataset[[y]])-min(dataset[[y]]))*0.1
+  # Put everything in a table
+  df <- data.frame(x_cor,y_cor,cld)
+  # Set order for x coordinate
+  df$x_cor <- as.numeric(factor(df$x_cor,levels=c('RI','YPC','OPC','WPM','EPM','OPM','OSW'),ordered = TRUE))
+  return(df)
+}
+```
+
+```{r}
+#average bodysize per habitat function
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+ return(data_sum)
+}
+```
+
+```{r}
+library(readxl)
+library(data.table)
+library(dplyr)
+
+zoops = read_excel("C:/Users/daven/Desktop/Montoya/Zoops/Zoop_Rstudio_V1.xlsx", sheet = "Data")
+attach(zoops)
+```
+
+```{r}
+#average bodysize per habitat
+BodySize_Hab_CN <- data_summary(zoops, varname="CN", 
+                    groupnames=c("BodySize", "Habitat"))
+
+BodySize_Hab_NP <- data_summary(zoops, varname="NP", 
+                    groupnames=c("BodySize", "Habitat"))
+
+BodySize_Hab_CP <- data_summary(zoops, varname="CP", 
+                    groupnames=c("BodySize", "Habitat"))
+
+BodySize_Hab_P <- data_summary(zoops, varname="P", 
+                    groupnames=c("BodySize", "Habitat"))
+
+BodySize_Hab_dN <- data_summary(zoops, varname="dN", 
+                    groupnames=c("BodySize", "Habitat"))
+
+BodySize_Hab_dC <- data_summary(zoops, varname="dC", 
+                    groupnames=c("BodySize", "Habitat")) 
+         
+```
+
+#Filter by bodysize
+```{r}
+zoops_200 <- zoops %>%
+  filter(BodySize==200)
+
+zoops_500 <- zoops %>%
+  filter(BodySize==500)
+
+zoops_1000 <- zoops %>%
+  filter(BodySize==1000)
+
+zoops_2000 <- zoops %>%
+  filter(BodySize==2000)
+
+zoops_4000 <- zoops %>%
+  filter(BodySize==4000)
+```
+
+#Filter by Habitat Type
+```{r}
+zoops_OPM <- zoops %>%
+  filter(Habitat=="OPM")
+
+zoops_YPC <- zoops %>%
+  filter(Habitat=="YPC")
+
+zoops_OSW <- zoops %>%
+  filter(Habitat=="OSW")
+
+zoops_WPM <- zoops %>%
+  filter(Habitat=="WPM")
+
+```
+
+#Filter by day/night
+```{r}
+zoops_day <- zoops %>%
+  filter(DayNight=="Day")
+
+zoops_night <- zoops %>%
+  filter(DayNight=="Night")
+```
+
+#Filter by station
+```{r}
+zoops_003.08 <- zoops %>%
+  filter(Station==3.08)
+  
+zoops_003.11 <- zoops %>%
+  filter(Station==3.11)
+  
+zoops_012.03 <- zoops %>%
+  filter(Station==12.03)
+  
+zoops_020.06 <- zoops %>%
+  filter(Station==20.06)
+
+zoops_022.03 <- zoops %>%
+  filter(Station==22.03)
+  
+zoops_022.10 <- zoops %>%
+  filter(Station==22.10)
+  
+zoops_024.01 <- zoops %>%
+  filter(Station==24.01)
+  
+zoops_024.06 <- zoops %>%
+  filter(Station==24.06)
+  
+zoops_027.05 <- zoops %>%
+  filter(Station==27.05)
+  
+```
+
+#Filter by Station (day and night together)
+```{r}
+zoops_003.08.11 <- zoops %>%
+  filter(Station==3.08 | Station==3.11)
+  
+zoops_022.03.10 <- zoops %>%
+  filter(Station==22.03 | Station==22.10)
+  
+zoops_024.01.06 <- zoops %>%
+  filter(Station==24.01 | Station==24.06)
+```
+
+
+#Habitat Type
+```{r}
+model = aov(P~Habitat, 
+            data=zoops)#p=0.00501*
+TukeyHSD(model, ordered=TRUE)
+#YPC-OSW p=0.0022947
+#YPC-OPM p=0.0312862
+
+model1 = aov(dN~Habitat, 
+            data=zoops)#p=1.6e-07*
+TukeyHSD(model1, ordered=TRUE)
+#OPM-OSW p=0.0050245
+#YPC-OSW p=0.0007257
+#WPM-OSW p=0.0000001
+#WPM-OPM p=0.0000391
+
+model2 = aov(dC~Habitat, 
+            data=zoops)#p=5.32e-05*
+TukeyHSD(model2, ordered=TRUE)
+#OPM-YPC p=0.0009008
+#WPM-YPC p=0.0000453
+#WPM-OSW p=0.0113340
+```
+
+#Paired Day/Night
+```{r}
+paired_CP <- Paired %>%
+  pairwise_t_test(
+    CP~DayNight, paired = TRUE)
+
+paired_CN <- Paired %>%
+  pairwise_t_test(
+    CN~DayNight, paired = TRUE)
+
+paired_NP <- Paired %>%
+  pairwise_t_test(
+    NP~DayNight, paired = TRUE)
+
+paired_P <- Paired %>%
+  pairwise_t_test(
+    P~DayNight, paired = TRUE)
+
+paired_dN <- Paired %>%
+  pairwise_t_test(
+    dN~DayNight, paired = TRUE)
+
+paired_dC <- Paired %>%
+  pairwise_t_test(
+    dC~DayNight, paired = TRUE)
+```
+
+
+```{r}
+zoops$Habitat <-factor(zoops$Habitat,levels=c('YPC','WPM','OPM','OSW'),ordered = TRUE)
+myshape = c(21, 21, 21, 21)
+mycolor = c("red","yellow","purple","blue")
+
+new = mybox(zoops, 'Habitat', 'P')
+new1 = mybox(zoops, 'Habitat', 'CN')
+new2 = mybox(zoops, 'Habitat', 'dN')
+new3 = mybox(zoops, 'Habitat', 'dC')
+
+mycolor= c("red", "blue")
+z111 = mybox(zoops, 'DayNight', 'CN')
+z112 = mybox(zoops, 'DayNight', 'CP')
+z113 = mybox(zoops, 'DayNight', 'NP')
+
+z111 <- z111 + theme(axis.title.x=element_blank())
+z112 <- z112 + theme(axis.title.x=element_blank())
+z113 <- z113 + theme(axis.title.x=element_blank())
+
+
+```
+
+
